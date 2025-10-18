@@ -1,12 +1,9 @@
 import streamlit as st
 import os
-import tempfile
-import whisper
 import re
 from langchain_community.llms import Ollama, HuggingFaceEndpoint
 from langchain_groq import ChatGroq
 from langchain.prompts import PromptTemplate
-from audiorecorder import audiorecorder
 from streamlit_TTS import text_to_speech, auto_play
 from gtts import gTTS
 import io
@@ -49,13 +46,6 @@ else:
     st.sidebar.warning("🏠 Local Mode: Ollama – Set USE_CLOUD_LLM=true for Render!")
     llm = Ollama(model="mistral", base_url="http://127.0.0.1:11434")
 
-# Load Whisper for STT
-try:
-    whisper_model = whisper.load_model("tiny")
-except Exception as e:
-    st.error(f"🚨 Whisper failed to load: {str(e)}. Check dependencies!")
-    whisper_model = None
-
 # Two modes: classic and unlocked
 def generate_response(user_input, mode="classic"):
     if "/unlock" in user_input:
@@ -85,7 +75,7 @@ def render_formatted_response(response):
     st.markdown(clean_response)
 
 # Web page setup
-st.title("My Grok Clone with SC—Voice Chaos Unleashed! 🎤😈")
+st.title("My Grok Clone with SC—Text Chaos Unleashed! 🎤😈")
 
 if "mode" not in st.session_state:
     st.session_state.mode = "classic"
@@ -96,33 +86,9 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# Input columns
-col1, col2 = st.columns(2)
-text_input = None
-with col1:
-    st.write("🗣️ Voice Mode (Whisper STT)")
-    audio = audiorecorder("Click to record", "Click to stop")
-    if len(audio) > 0:
-        st.audio(audio.export(format="wav"), format="audio/wav")
-        with st.spinner("Transcribing your evil plan..."):
-            if whisper_model:
-                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_audio:
-                    audio.export(temp_audio.name, format="wav")
-                    result = whisper_model.transcribe(temp_audio.name)
-                    text_input = result["text"].strip()
-                    os.unlink(temp_audio.name)
-                if text_input:
-                    st.success(f"🗣️ You said: {text_input}")
-                else:
-                    text_input = "Whisper heard nothing—yell louder!"
-            else:
-                text_input = st.text_input("Whisper failed! Type what you said:")
-                if text_input:
-                    st.success(f"🗣️ You said: {text_input}")
-
-with col2:
-    st.write("✏️ Type Mode")
-    text_input = st.chat_input("Type your command...") or text_input
+# Text input only
+st.write("✏️ Type Mode")
+text_input = st.chat_input("Type your command...")
 
 if text_input:
     try:
